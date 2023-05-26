@@ -1,55 +1,32 @@
 from bs4 import BeautifulSoup
 import requests
-import os
-import shutil
-from manga_title import MangaTitle
-
-page = 'https://onepiecechapters.com'
+from model.manga_title import MangaTitle
+from misc.constants import page
+from misc.methods import download, create_catalog, get_list_of_images
 
 
-def detect_new(site):
-    generated_html = requests.get(f'{page}')
+def detect_new(site, expected_titles):
+    generated_html = requests.get(f'{site}')
 
     page_parsed = BeautifulSoup(generated_html.text, 'html.parser')
-    page_object = page_parsed.find_all("a", "mb-2 text-white text-lg font-bold")
+    page_object = page_parsed.find_all("a", "text-white text-lg font-bold")
 
-    links = []
-    titles = []
+    links = [page_object[i]['href'] for i in range(len(page_object))]
+    titles = [page_object[i].text for i in range(len(page_object))]
 
-    for i in range(len(page_object)):
-        links.append(page_object[i]['href'])
-        titles.append(page_object[i].text)
+    for expected in expected_titles:
+        for title in titles:
+            if expected in title:
 
-    for title in titles:
-        if 'One Piece' in title or 'Jujutsu Kaisen' in title:
-            current_title = MangaTitle(title)
-            current_title.check_for_latest()
+                current_title = MangaTitle(title)
 
-            path = os.path.join(os.getcwd(), title)
-
-            if os.path.exists(path):
-                pass
-            else:
-                os.mkdir(path)
-
-            title_id = titles.index(title)
-            new_page = f'{page}{links[title_id]}'
-            new_html = requests.get(new_page)
-            parsed_page = BeautifulSoup(new_html.text, 'html.parser')
-            images = parsed_page.find_all("img", class_="fixed-ratio-content")
-
-            download(images, title, path)
+                if current_title.is_the_latest():
+                    path = create_catalog(title)
+                    images = get_list_of_images(titles, links, title, site)
+                    download(images, title, path)
 
 
-def download(files, title, path):
-    for image in files:
-        link = image['src']
-        filename = link.split('/')[-1]
-        get_image = requests.get(link)
-        open(os.path.join(path, filename), 'wb').write(get_image.content)
-        print(f'DONE ::: {filename} :::')
-    print(f'\n::: {title} is downloaded:::\n')
-    shutil.make_archive(title, 'zip', title)
 
 
-detect_new(page)
+while True:
+    detect_new(page, ["Jujutsu Kaisen", "One Piece"])

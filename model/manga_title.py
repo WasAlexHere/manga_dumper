@@ -8,15 +8,15 @@ class MangaTitle:
         self.chapter_number = self.decomposed_name[len(self.decomposed_name) - 1]
         self.chapter = self.decomposed_name[len(self.decomposed_name) - 2]
 
-        result = ''
+        self.result = ''
         for word in self.decomposed_name:
             if word in (self.chapter, self.chapter_number):
                 continue
             else:
-                result += word
-                result += ' '
+                self.result += word
+                self.result += ' '
 
-        self.manga_name = result.strip()
+        self.manga_name = self.result.strip()
 
         if not db.already_in_db(self.manga_name):
             db.insert_title(self.manga_name,
@@ -29,13 +29,15 @@ class MangaTitle:
 
         if current_volume == next_volume:
             return True
-        else:
-            return False
+        return False
 
-    def check_for_latest(self):
+    def update_chapter_number_in_db(self):
+        db.update_chapter_number(float(self.chapter_number), self.manga_name)
+
+    def wait_for_next_attempt(self):
         if self.is_the_latest():
             db.update_chapter_number(float(self.chapter_number), self.manga_name)
         else:
             print('not the latest!')
             time.sleep(10)
-            self.check_for_latest()
+            # self.check_for_latest()

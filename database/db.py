@@ -1,6 +1,6 @@
 import sqlite3
 
-db_connect = sqlite3.connect('manga_list.db')
+db_connect = sqlite3.connect('database/manga_list.db')
 
 c = db_connect.cursor()
 c.execute("""CREATE TABLE IF NOT EXISTS manga_list (
@@ -16,10 +16,10 @@ def already_in_db(manga_name):
                            "WHERE title = ?", (manga_name,))
     number = duplicates.fetchone()
     if number[0] > 0:
-        print('already in db')
+        # print('already in db')
         return True
     else:
-        print('not in db')
+        # print('not in db')
         return False
 
 
